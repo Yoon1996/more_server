@@ -43,16 +43,15 @@ router.get('/token-verify', (req, res) => {
 
 })
 //아이디 유효성 확인 api
-router.get("/nickname-check", async (req, res) => {
+router.get("/email-check", async (req, res) => {
 
-  if (!req?.query?.nickname) {
+  if (!req?.query?.email) {
     res.status(400).json({ statusMessage: "Invalid params" })
     return
   }
-  const user = await User.findOne({ where: { nickname: req.query.nickname } })
+  const user = await User.findOne({ where: { email: req.query.email } })
 
   if (user) {
-    // res.status(409).json({statusMessage: "Duplicated Nickname"})
     res.json({ isDuplicated: true })
     return
   }
@@ -63,10 +62,9 @@ router.post("/sign-up", async (req, res) => {
   // res.send("aaaa");
   // const email = 'test@namer.com'
   // const password = '1234'
-  const { id, nickname, password, email, name, birth } = req.body;
+  const { id, password, email, name, birth } = req.body;
 
   const dupRes = await Promise.all([
-    User.findOne({ where: { nickname } }),
     User.findOne({ where: { email } }),
   ]);
 
@@ -82,7 +80,7 @@ router.post("/sign-up", async (req, res) => {
 
   const createUser = await User.create({
     id,
-    nickname,
+    nickname: '',
     email,
     name,
     birth,
@@ -99,13 +97,14 @@ router.post("/sign-up", async (req, res) => {
 //로그인api
 router.post('/login', async (req, res) => {
 
+  console.log(11111)
+  const { email, password } = req.body
 
 
-  const { nickname, password } = req.body
+
 
   try {
-    const user = await User.findOne({ where: { nickname } });
-    // console.log('nickname: ', nickname);
+    const user = await User.findOne({ where: { email: email } });
 
     if (!user) throw 'INVALID_USERNAME_OR_PASSWORD'
 
@@ -128,8 +127,6 @@ router.post('/login', async (req, res) => {
     } else {
       return res.json({ success: false, message: 'Invalid username or password' });
     }
-
-
 
   } catch (error) {
     console.error(error);

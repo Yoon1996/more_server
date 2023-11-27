@@ -11,15 +11,10 @@ var router = express.Router();
 //레시피 생성
 router.post("/create_recipe", async (req, res) => {
 
-
   const userId = req.userInfo.id
-  const { id, name, ingredientList, categoryName } = req.body;
-
-
+  const { id, name, ingredientList, categoryName, view } = req.body;
   try {
     if (!name) throw "EMPTY_NAME"
-
-
     //카테고리 아이디를 만들기 위한 변수
     const categoryId = await Category.findOne({
       where: {
@@ -27,12 +22,9 @@ router.post("/create_recipe", async (req, res) => {
         name: categoryName,
       }
     })
-
     const makeCategoryId = categoryId.id
     const recipe = await Recipe.findOne({ where: { name } })
-
     if (recipe) throw "DUPLICATED_NAME"
-
     //레시피 등록
     const createRecipe = await Recipe.create({
       id,
@@ -40,6 +32,7 @@ router.post("/create_recipe", async (req, res) => {
       userId,
       categoryName,
       categoryId: makeCategoryId,
+      view: 0,
     });
 
     //재료 등록
@@ -68,12 +61,24 @@ router.post("/create_recipe", async (req, res) => {
 
 //레시피 보여주기
 router.get("/recipes", async (req, res, next) => {
+  console.log(req.query.filter)
   try {
-
     if (!req?.userInfo) throw 'NoUser'
+    else if (req.query.filter === '최신순') {
+      const recentRecipe = await Recipe.findAll({
+        order: [["createdAt", "desc"]]
+      })
+      res.json(recentRecipe)
+    }
+    else if (req.query.filter === '조회순') {
+      const viewRecipe = await Recipe.findAll({
+        order: [["view", "desc"]]
+      })
+      res.json(viewRecipe)
+    }
     else {
       const userId = req.userInfo.id
-      const recipe = await Recipe.findAll({ where: { userId } })
+      const recipe = await Recipe.findAll({})
       res.json(recipe)
     }
 
@@ -112,10 +117,6 @@ router.get("/recipes/:categoryId", async (req, res) => {
 router.get("/recipe-component/:recipeId", async (req, res) => {
   try {
     const recipeId = req.params.recipeId
-    console.log('recipeId: ', recipeId);
-
-
-
     const currentRecipe = await Recipe.findOne({
       where: {
         id: recipeId
@@ -123,10 +124,11 @@ router.get("/recipe-component/:recipeId", async (req, res) => {
       include: [
         { model: Ingredient, as: "Ingredients", attributes: ["id", "recipeId", "name", "ea", "unit"] }
       ]
-
     })
-
-
+    if (currentRecipe) {
+      // currentRecipe.increment("view")
+      await currentRecipe.increment("view", { by: 1 })
+    }
     res.json(currentRecipe)
   }
   catch (error) {

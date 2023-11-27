@@ -28,6 +28,9 @@ const Recipe = sequelize.define('recipe', {
     updatedAt: {
         type: DataTypes.DATE
     },
+    view: {
+        type: DataTypes.INTEGER
+    }
 
 
 }, { freezeTableName: true }) // table 이름 고정 (변형위험있음)
