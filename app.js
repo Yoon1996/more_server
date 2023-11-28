@@ -10,6 +10,7 @@ var categoryRouter = require('./routes/category');
 var postRouter = require('./routes/post')
 var recipeRouter = require('./routes/recipe')
 var mailRouter = require('./routes/mail')
+var bookmarkRouter = require('./routes/bookmark')
 
 const cors = require('cors');
 const { sequelize } = require('./util/database.util');
@@ -50,6 +51,7 @@ app.use('/users', usersRouter);
 app.use('/category', categoryRouter);
 app.use('/recipe', recipeRouter)
 app.use('/mail', mailRouter)
+app.use('/bookmark', bookmarkRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

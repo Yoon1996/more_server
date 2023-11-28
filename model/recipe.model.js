@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../util/database.util');
 const Ingredient = require('./ingredient.model');
+const Bookmark = require('./bookmark.model');
 
 const Recipe = sequelize.define('recipe', {
 
@@ -43,5 +44,7 @@ Recipe.hasMany(Ingredient, {
     onDelete: 'CASCADE', // If a Recipe is deleted, its associated Ingredients will also be deleted
     onUpdate: 'CASCADE', // If a Recipe's ID is updated, its associated Ingredients will also be updated
 });
+
+Recipe.hasMany(Bookmark)
 
 module.exports = Recipe

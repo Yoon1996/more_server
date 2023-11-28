@@ -88,6 +88,7 @@ router.get("/recipes", async (req, res, next) => {
   }
 
 })
+//즐겨찾기 레시피 보여주기
 
 //레시피 필터링
 router.get("/recipes/:categoryId", async (req, res) => {
@@ -97,8 +98,6 @@ router.get("/recipes/:categoryId", async (req, res) => {
   const userId = req.userInfo.id
 
   try {
-
-
     const recipeFilter = await Recipe.findAll({
       where: {
         userId: userId,

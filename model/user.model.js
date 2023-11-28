@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../util/database.util');
 const Category = require('./category.model');
+const Bookmark = require('./bookmark.model');
 
 const User = sequelize.define('user', {
     id: {
@@ -44,5 +45,7 @@ User.hasMany(Category, {
     onDelete: 'CASCADE', // If a Recipe is deleted, its associated Ingredients will also be deleted
     onUpdate: 'CASCADE', // If a Recipe's ID is updated, its associated Ingredients will also be updated
 });
+
+User.hasMany(Bookmark)
 
 module.exports = User
