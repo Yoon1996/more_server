@@ -2,6 +2,33 @@ var express = require('express');
 const Category = require('../model/category.model');
 const Recipe = require('../model/recipe.model');
 var router = express.Router();
+const categoryList = [
+  {
+    name: '한식',
+    categoryId: 0
+  },
+  {
+    name: '일식',
+    categoryId: 1
+  },
+  {
+    name: '양식',
+    categoryId: 2
+  },
+  {
+    name: '중식',
+    categoryId: 3
+  },
+  {
+    name: '제과',
+    categoryId: 4
+  },
+  {
+    name: '제빵',
+    categoryId: 5
+  },
+
+]
 
 //카테고리 생성
 router.post('/create_category', async (req, res) => {
@@ -54,11 +81,12 @@ router.post('/create_category', async (req, res) => {
 
 //카테고리 보여주기
 router.get('/categories', async (req, res) => {
-  //현재 접속한 아이디의 카테고리를 보여주기
-  const userId = req.userInfo.id //현재 접속한 유저의 아이디
-  console.log('req.userInfo: ', req.userInfo);
-  const categoryList = await Category.findAll({ where: { userId } })
-  res.json(categoryList)
+  try {
+    res.json(categoryList)
+  }
+  catch (err) {
+    console.log('err: ', err);
+  }
 })
 
 //카테고리 삭제하기
@@ -106,5 +134,7 @@ router.delete('/delete_category/:categoryId', async (req, res) => {
 
 
 })
+
+//카테고리
 
 module.exports = router;

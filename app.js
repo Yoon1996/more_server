@@ -17,6 +17,8 @@ const { sequelize } = require('./util/database.util');
 const { authMiddleware } = require('./middleware/auth.middleware');
 const { authGuard } = require('./guard/auth.guard');
 const Ingredient = require('./model/ingredient.model');
+const Recipe = require('./model/recipe.model');
+const Bookmark = require('./model/bookmark.model');
 
 console.log(process.env.NODE_ENV)
 
@@ -38,6 +40,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 sequelize.authenticate()
   .then((res) => {
     console.log("connect Success !!!:", res);
+
+    Recipe.hasMany(Ingredient, {
+      as: "Ingredients",
+      foreignKey: 'recipeId', // This links the recipeId column in the Ingredient model to the Recipe model
+      onDelete: 'CASCADE', // If a Recipe is deleted, its associated Ingredients will also be deleted
+      onUpdate: 'CASCADE', // If a Recipe's ID is updated, its associated Ingredients will also be updated
+    });
+    Recipe.hasMany(Bookmark, {
+      as: "Bookmarks",
+      foreignKey: 'recipeId', // This links the recipeId column in the Ingredient model to the Recipe model
+    });
+
+    // Bookmark.belongsTo(Recipe, {
+    //   foreignKey: 'recipeId',
+    //   as: 'bookmarks'
+    // })
+
   })
   .catch(error => {
     console.log('connect fail !!!:', error);

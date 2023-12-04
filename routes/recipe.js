@@ -6,6 +6,7 @@ const Category = require("../model/category.model");
 const { resolveInclude } = require("ejs");
 const { sequelize } = require("../util/database.util");
 const { where } = require("sequelize");
+const Bookmark = require("../model/bookmark.model");
 var router = express.Router();
 
 //레시피 생성
@@ -19,7 +20,6 @@ router.post("/create_recipe", async (req, res) => {
     const categoryId = await Category.findOne({
       where: {
         userId: userId,
-        name: categoryName,
       }
     })
     const makeCategoryId = categoryId.id
@@ -29,9 +29,9 @@ router.post("/create_recipe", async (req, res) => {
     const createRecipe = await Recipe.create({
       id,
       name,
-      userId,
       categoryName,
-      categoryId: makeCategoryId,
+      makeCategoryId,
+      userId,
       view: 0,
     });
 
@@ -62,23 +62,55 @@ router.post("/create_recipe", async (req, res) => {
 //레시피 보여주기
 router.get("/recipes", async (req, res, next) => {
   console.log(req.query.filter)
+  const userId = req.userInfo.id
   try {
+    const findParams = {
+      where: {
+        userId: userId
+      },
+      include: [
+        {
+          model: Bookmark,
+          attributes: ['userId', "recipeId"],
+          as: 'Bookmarks'
+        }
+      ],
+    }
     if (!req?.userInfo) throw 'NoUser'
     else if (req.query.filter === '최신순') {
       const recentRecipe = await Recipe.findAll({
+        ...findParams,
         order: [["createdAt", "desc"]]
       })
       res.json(recentRecipe)
     }
     else if (req.query.filter === '조회순') {
       const viewRecipe = await Recipe.findAll({
+        ...findParams,
         order: [["view", "desc"]]
       })
       res.json(viewRecipe)
     }
+    else if (req.query.filter === '북마크') {
+      // findParams.include[0].required = true
+
+      const bookmarkRecipe = await Recipe.findAll({
+        ...findParams,
+        include: [{ ...findParams.include[0], required: true }]
+      })
+      res.json(bookmarkRecipe)
+    } else if (req.query.filter === '오래된 순') {
+      const longTimeRecipe = await Recipe.findAll({
+        ...findParams,
+        order: [["createdAt", "asc"]]
+      })
+      res.json(longTimeRecipe)
+    }
     else {
       const userId = req.userInfo.id
-      const recipe = await Recipe.findAll({})
+      const recipe = await Recipe.findAll({
+        ...findParams,
+      })
       res.json(recipe)
     }
 

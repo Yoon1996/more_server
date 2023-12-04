@@ -2,22 +2,38 @@ var express = require('express');
 const Bookmark = require('../model/bookmark.model');
 var router = express.Router();
 
-router.post("/save-bookmark", async (req, res) => {
-    const userId = req.userInfo.id
-    const { id, params } = req.body
-    const recipeId = req.body.recipeId
-    if (!userId) throw 'not user'
+router.post("/bookmark-toggle", async (req, res) => {
     try {
-        const saveBookmark = await Bookmark.create({
-            id,
-            userId: userId,
-            recipeId: recipeId
+        const userId = req.userInfo.id
+        const { id, params } = req.body
+        const recipeId = req.body.recipeId
+        const alreadyBoomark = await Bookmark.findOne({
+            where: {
+                userId: userId,
+                recipeId: recipeId
+            }
         })
-        await saveBookmark.save()
-        res.json(saveBookmark)
+        console.log('alreadyBoomark: ', alreadyBoomark);
+        //북마크가 테이블에 없을 경우 생성
+        if (!alreadyBoomark) {
+            await Bookmark.create({
+                id,
+                userId: userId,
+                recipeId: recipeId
+            })
+            res.json({ statusMessage: "CreateBookmark" })
+        } else {
+            await Bookmark.destroy({
+                where: {
+                    userId: userId,
+                    recipeId: recipeId
+                }
+            })
+            res.json({ statusMessage: "DeleteBookmark" })
+        }
     }
     catch (err) {
-        console.log('err: ', err);
+        console.log(err)
     }
 })
 

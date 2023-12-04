@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 const { sequelize } = require('../util/database.util');
 const Ingredient = require('./ingredient.model');
 const Bookmark = require('./bookmark.model');
+const User = require('./user.model');
 
 const Recipe = sequelize.define('recipe', {
 
@@ -38,13 +39,13 @@ const Recipe = sequelize.define('recipe', {
 
 /* user.js */
 
-Recipe.hasMany(Ingredient, {
-    as: "Ingredients",
-    foreignKey: 'recipeId', // This links the recipeId column in the Ingredient model to the Recipe model
-    onDelete: 'CASCADE', // If a Recipe is deleted, its associated Ingredients will also be deleted
-    onUpdate: 'CASCADE', // If a Recipe's ID is updated, its associated Ingredients will also be updated
-});
 
-Recipe.hasMany(Bookmark)
+// Recipe.belongsTo(User)
+// Recipe.hasMany(Bookmark, {
+//     as: "Bookmarks",
+//     foreignKey: "recipeId"
+// })
+// Recipe.hasOne(Bookmark)
+
 
 module.exports = Recipe
