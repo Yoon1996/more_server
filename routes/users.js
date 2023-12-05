@@ -211,7 +211,7 @@ router.put("/user/:userId", async (req, res) => {
     const userId = req.userInfo.id
     const { userData } = req.body
 
-    await User.update({ name: userData.name, nickname: userData.nickname, email: userData.email, birth: userData.birth }, {
+    await User.update({ name: userData.name, email: userData.email, birth: userData.birth }, {
       where: {
         id: userId,
       }

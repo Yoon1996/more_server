@@ -2,76 +2,36 @@ var express = require('express');
 const Category = require('../model/category.model');
 const Recipe = require('../model/recipe.model');
 var router = express.Router();
-const categoryList = [
-  {
-    name: '한식',
-    categoryId: 0
-  },
-  {
-    name: '일식',
-    categoryId: 1
-  },
-  {
-    name: '양식',
-    categoryId: 2
-  },
-  {
-    name: '중식',
-    categoryId: 3
-  },
-  {
-    name: '제과',
-    categoryId: 4
-  },
-  {
-    name: '제빵',
-    categoryId: 5
-  },
-
-]
 
 //카테고리 생성
 router.post('/create_category', async (req, res) => {
 
   const userId = req.userInfo.id
-
   const { category } = req.body;
-
-
-
   try {
-
     const alreadyCategory = await Category.findOne({ where: { name: req.body.category, userId: userId } })
-
-
     //카테고리 빈값
     if (category.length === 0) {
       res.json({ isEmpty: true })
       return
     }
-
-
     //카테고리 name 중복 로직
     if (alreadyCategory) {
       res.json({ isDuplicated: true })
       return
     }
-
     //카테고리 생성 로직
-    const categoryWithUserId = ({
+    const createCategory = await Category.create({
       name: category,
       userId: userId
     })
-
-    const createCategory = await Category.create(
-      categoryWithUserId
-    )
-
     createCategory
-
-    const currentCategory = await Category.findAll({ where: { userId } })
-
-    res.json(currentCategory)
+    const categoryList = await Category.findAll({
+      where: {
+        userId: userId
+      }
+    })
+    res.json(categoryList)
   }
   catch (error) {
     console.log('error: ', error);
@@ -81,7 +41,13 @@ router.post('/create_category', async (req, res) => {
 
 //카테고리 보여주기
 router.get('/categories', async (req, res) => {
+  const userId = req.userInfo.id
   try {
+    const categoryList = await Category.findAll({
+      where: {
+        userId: userId
+      }
+    })
     res.json(categoryList)
   }
   catch (err) {
