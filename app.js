@@ -19,6 +19,7 @@ const { authGuard } = require('./guard/auth.guard');
 const Ingredient = require('./model/ingredient.model');
 const Recipe = require('./model/recipe.model');
 const Bookmark = require('./model/bookmark.model');
+const Withdraw = require('./model/withdraw.model')
 
 console.log(process.env.NODE_ENV)
 
@@ -49,13 +50,13 @@ sequelize.authenticate()
     });
     Recipe.hasMany(Bookmark, {
       as: "Bookmarks",
-      foreignKey: 'recipeId', // This links the recipeId column in the Ingredient model to the Recipe model
+      foreignKey: 'recipeId',
     });
 
-    // Bookmark.belongsTo(Recipe, {
-    //   foreignKey: 'recipeId',
-    //   as: 'bookmarks'
-    // })
+    Bookmark.belongsTo(Recipe, {
+      foreignKey: 'recipeId',
+      as: 'bookmarks'
+    })
 
   })
   .catch(error => {

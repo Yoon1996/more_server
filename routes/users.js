@@ -1,5 +1,6 @@
 var express = require("express");
 const User = require("../model/user.model");
+const Withdraw = require("../model/withdraw.model")
 const { getHash, compare } = require("../util/password.util");
 const { tokenSign, tokenValidation } = require("../util/auth.util");
 var router = express.Router();
@@ -264,12 +265,19 @@ router.post("/pw-check/", async (req, res) => {
 router.put("/user/", async (req, res) => {
   try {
     const userId = req.userInfo.id;
+    console.log('userId: ', userId);
+    const { message, buttonMessage } = req.body
+    console.log('req.body: ', req.body);
     await User.update({ name: null, nickname: "탈퇴회원", password: null, email: null, birth: null, withDraw: true }, {
       where: {
         id: userId
       }
     })
-    res.json("탈퇴 성공")
+    const withdrawMessage = await Withdraw.create({
+      message: message,
+      buttonMessage: buttonMessage
+    })
+    res.json(withdrawMessage)
   }
   catch (error) {
     res.status(500).json({ statusMessage: "Internal server error" })

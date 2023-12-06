@@ -92,8 +92,8 @@ router.get("/recipes", async (req, res, next) => {
       res.json(viewRecipe)
     }
     else if (req.query.filter === '북마크') {
-      // findParams.include[0].required = true
 
+      // findParams.include[0].required = true
       const bookmarkRecipe = await Recipe.findAll({
         ...findParams,
         include: [{ ...findParams.include[0], required: true }]
@@ -120,7 +120,17 @@ router.get("/recipes", async (req, res, next) => {
   }
 
 })
-//즐겨찾기 레시피 보여주기
+//레시피 검색 기능
+router.get("/recipes", async (req, res) => {
+
+  console.log(req)
+  try {
+    res.json("dddd")
+  }
+  catch (err) {
+    console.log('err: ', err);
+  }
+})
 
 //레시피 필터링
 router.get("/recipes/:categoryId", async (req, res) => {
@@ -180,6 +190,7 @@ router.put("/recipes/:recipeId", async (req, res) => {
     const newTitle = req.body.recipeName
     const newCategoryName = req.body.categoryName
     const newIngredientList = req.body.ingredientList
+    console.log('newIngredientList: ', newIngredientList);
 
     //수정 된 레시피의 카테고리 아이디를 구하는 로직
     const updateCategory = await Category.findOne({
@@ -211,18 +222,7 @@ router.put("/recipes/:recipeId", async (req, res) => {
         transaction: t, //이 쿼리를 트랜잭션 처리
       })
     })
-
     const updateRes = await Promise.all(updateIngredientPromiseList)
-    // await 
-    // Ingredient.update(updateIngredientList, {
-    //   where: { recipeId: recipeId },
-    //   transaction: t, //이 쿼리를 트랜잭션 처리
-    // })
-
-
-
-    // updateRecipe
-    // updateIngredientList
 
     await t.commit(); //트랜잭션 문제없으면 커밋
 
@@ -252,6 +252,11 @@ router.delete('/recipes/:recipeId', async (req, res) => {
   try {
     await Recipe.destroy({
       where: { id: recipeId, userId: userInfo }
+    })
+    await Ingredient.destroy({
+      where: {
+        recipeId
+      }
     })
 
     const recipes = await Recipe.findAll({
