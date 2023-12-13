@@ -13,44 +13,46 @@ var router = express.Router();
 router.post("/create_recipe", async (req, res) => {
 
   const userId = req.userInfo.id
-  const { id, name, ingredientList, categoryName, view } = req.body;
+  const { name, ingredientList, categoryName, view } = req.body;
+  console.log('ingredientList: ', ingredientList);
+
+  //카테고리 아이디를 만들기 위한 변수
+  const categoryId = await Category.findOne({
+    where: {
+      userId: userId,
+      name: categoryName
+    }
+  })
+  const makeCategoryId = categoryId.id
+  console.log(makeCategoryId)
   try {
-    if (!name) throw "EMPTY_NAME"
-    //카테고리 아이디를 만들기 위한 변수
-    const categoryId = await Category.findOne({
-      where: {
-        userId: userId,
-      }
-    })
-    const makeCategoryId = categoryId.id
     const recipe = await Recipe.findOne({ where: { name } })
     if (recipe) throw "DUPLICATED_NAME"
-    //레시피 등록
+    // 레시피 등록
     const createRecipe = await Recipe.create({
-      id,
-      name,
-      categoryName,
-      makeCategoryId,
-      userId,
+      name: name,
+      categoryName: categoryName,
+      categoryId: makeCategoryId,
+      userId: userId,
       view: 0,
     });
 
     //재료 등록
-    const ingredientsWithRecipeId = ingredientList.map((ingredient) => ({
-      ...ingredient,
-      recipeId: createRecipe.id
-    }));
+    if (ingredientList?.length) {
+      const ingredientsWithRecipeId = ingredientList.map((ingredient) => ({
+        ...ingredient,
+        recipeId: createRecipe.id
+      }));
 
-    await Ingredient.bulkCreate(
-      ingredientsWithRecipeId
-    )
+      await Ingredient.bulkCreate(
+        ingredientsWithRecipeId
+      )
+    }
     res.json(createRecipe)
   }
   catch (error) {
     console.log('error: ', error);
-    if (error === 'EMPTY_NAME') {
-      res.status(400).json({ statusMessage: "EMPTY_NAME" })
-    } else if (error === 'DUPLICATED_NAME') {
+    if (error === 'DUPLICATED_NAME') {
       res.status(409).json({ statusMessage: "DUPLICATED_NAME" })
     } else {
       res.status(500).json({ statusMessage: "SERVER_ERROR" })
@@ -163,11 +165,10 @@ router.get("/recipe-component/:recipeId", async (req, res) => {
         id: recipeId
       },
       include: [
-        { model: Ingredient, as: "Ingredients", attributes: ["id", "recipeId", "name", "ea", "unit"] }
+        { model: Ingredient, as: "Ingredients", attributes: ["id", "recipeId", "name", "ea", "unit"] },
       ]
     })
     if (currentRecipe) {
-      // currentRecipe.increment("view")
       await currentRecipe.increment("view", { by: 1 })
     }
     res.json(currentRecipe)
@@ -180,65 +181,70 @@ router.get("/recipe-component/:recipeId", async (req, res) => {
 
 //레시피 수정하기
 router.put("/recipes/:recipeId", async (req, res) => {
+  const userId = req.userInfo.id
+  const recipeId = req.body.recipeId
+  const newTitle = req.body.recipeName
+  const newCategoryName = req.body.categoryName
+  const newIngredientList = req.body.ingredientList
+  const newCategoryId = req.body.categoryId
 
-  const t = await sequelize.transaction();
+  //들어온 재료 리스트가 현재 있는 재료 리스트의 개수랑 같으면 업데이트.
+  //선택된 레시피의 현재 레시피 개수를 나타내는 로직
+  const currentIngredientList = await Ingredient.findAll({
+    where: {
+      recipeId: recipeId
+    }
+  })
+
+  const newAddArray = newIngredientList.filter((received) => {
+    return !currentIngredientList.some((current) => {
+      return received.id === current.id
+    })
+  })
+  const newMinusArray = currentIngredientList.filter((current) => {
+    return !newIngredientList.some((received) => {
+      return received.id === current.id
+    })
+  })
 
   try {
-
-    const userId = req.userInfo.id
-    const recipeId = req.params.recipeId
-    const newTitle = req.body.recipeName
-    const newCategoryName = req.body.categoryName
-    const newIngredientList = req.body.ingredientList
-    console.log('newIngredientList: ', newIngredientList);
-
-    //수정 된 레시피의 카테고리 아이디를 구하는 로직
-    const updateCategory = await Category.findOne({
-      where: {
-        userId: userId,
-        name: newCategoryName
-      }
-    })
-    const updateRecipe = await Recipe.update({ name: newTitle, categoryName: newCategoryName, categoryId: updateCategory.id }, {
+    await Recipe.update({ name: newTitle, categoryName: newCategoryName, categoryId: newCategoryId }, {
       where: {
         userId: userId,
         id: recipeId,
       },
-      transaction: t, //이 쿼리를 트랜잭션 처리
     })
-
-    const currentIngredients = newIngredientList.map((ingredient, index) => {
-      Ingredient.findAll({
-        where: {
-          recipeId: recipeId
-        }
+    if (currentIngredientList.length === newIngredientList.length) {
+      const updateIngredientPromiseList = newIngredientList.map((ingredient) => {
+        const updateParams = { name: ingredient.name, ea: ingredient.ea, unit: ingredient.unit }
+        return Ingredient.update(updateParams, {
+          where: { id: ingredient.id, recipeId: recipeId },
+        })
       })
-    })
+      await Promise.all(updateIngredientPromiseList)
+      //들어온 재료 리스트가 현재 있는 재료 리스트보다 많으면 추가생성
+    } else if (currentIngredientList.length < newIngredientList.length) {
+      const ingredientsWithRecipeId = newAddArray.map((ingredient) => ({
+        ...ingredient,
+        recipeId: recipeId,
+      }));
 
-    const updateIngredientPromiseList = newIngredientList.map((ingredient) => {
-      const updateParams = { name: ingredient.name, ea: ingredient.ea, unit: ingredient.unit }
-      return Ingredient.update(updateParams, {
-        where: { id: ingredient.id, recipeId: recipeId },
-        transaction: t, //이 쿼리를 트랜잭션 처리
-      })
-    })
-    const updateRes = await Promise.all(updateIngredientPromiseList)
-
-    await t.commit(); //트랜잭션 문제없으면 커밋
-
+      await Ingredient.bulkCreate(
+        ingredientsWithRecipeId
+      )
+    } else if (currentIngredientList.length > newIngredientList.length) {
+      await Promise.all(newMinusArray.map(obj => obj.destroy()))
+    }
     const currentRecipe = await Recipe.findAll({
       where: {
         userId: userId,
-
       }
     })
-
     res.json(currentRecipe)
-
   }
   catch (error) {
     console.log('error: ', error);
-    await t.rollback(); //중간에 failed 나면 트랜잭션 롤백
+    // await t.rollback(); //중간에 failed 나면 트랜잭션 롤백
 
   }
 })

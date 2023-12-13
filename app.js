@@ -1,3 +1,5 @@
+const AWS = require('aws-sdk');
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -11,6 +13,7 @@ var postRouter = require('./routes/post')
 var recipeRouter = require('./routes/recipe')
 var mailRouter = require('./routes/mail')
 var bookmarkRouter = require('./routes/bookmark')
+var urlRouter = require('./routes/url')
 
 const cors = require('cors');
 const { sequelize } = require('./util/database.util');
@@ -19,12 +22,16 @@ const { authGuard } = require('./guard/auth.guard');
 const Ingredient = require('./model/ingredient.model');
 const Recipe = require('./model/recipe.model');
 const Bookmark = require('./model/bookmark.model');
-const Withdraw = require('./model/withdraw.model')
+const Category = require('./model/category.model');
+
+
 
 console.log(process.env.NODE_ENV)
 
 
+
 var app = express();
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -58,11 +65,37 @@ sequelize.authenticate()
       as: 'bookmarks'
     })
 
+    // Recipe.hasMany(Category, {
+    //   foreignKey: 'categoryId',
+    //   as: "Categorys"
+    // })
+
   })
   .catch(error => {
     console.log('connect fail !!!:', error);
   })
 
+
+// aws region 및 자격증명 설정
+AWS.config.update({
+  accessKeyId: process.env.S3_ACCESS_KEY_ID,
+  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+  region: 'ap-northeast-2',
+});
+// console.log('process.env.S3_ACCESS_KEY_ID: ', process.env.S3_ACCESS_KEY_ID);
+// console.log('process.env.S3_SECRET_ACCESS_KEY: ', process.env.S3_SECRET_ACCESS_KEY);
+
+// 자격증명 데이터를 따로 파일로 관리한다면 다음으로 호출할수 있다.
+// AWS.config.loadFromPath('./config.json');
+
+
+/* S3에 있는 버킷 리스트 출력 */
+const s3 = new AWS.S3();
+
+// 프로미스 기반 aws sdk api
+s3.listBuckets().promise().then((data) => {
+  // console.log('S3 : ', JSON.stringify(data, null, 2));
+});
 
 app.use(authMiddleware)
 app.use('/', indexRouter);
@@ -72,6 +105,7 @@ app.use('/category', categoryRouter);
 app.use('/recipe', recipeRouter)
 app.use('/mail', mailRouter)
 app.use('/bookmark', bookmarkRouter)
+app.use('/url', urlRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
