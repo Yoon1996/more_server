@@ -14,18 +14,18 @@ router.post("/create_recipe", async (req, res) => {
 
   const userId = req.userInfo.id
   const { name, ingredientList, categoryName, view } = req.body;
-  console.log('ingredientList: ', ingredientList);
 
-  //카테고리 아이디를 만들기 위한 변수
-  const categoryId = await Category.findOne({
-    where: {
-      userId: userId,
-      name: categoryName
-    }
-  })
-  const makeCategoryId = categoryId.id
-  console.log(makeCategoryId)
   try {
+    if (!name && !categoryName && !ingredientList) throw "ALL_EMPTY"
+    //카테고리 아이디를 만들기 위한 변수
+    const categoryId = await Category.findOne({
+      where: {
+        userId: userId,
+        name: categoryName
+      }
+    })
+    const makeCategoryId = categoryId.id
+    if (!makeCategoryId) throw "NO_CATEGORY"
     const recipe = await Recipe.findOne({ where: { name } })
     if (recipe) throw "DUPLICATED_NAME"
     // 레시피 등록
@@ -48,13 +48,21 @@ router.post("/create_recipe", async (req, res) => {
         ingredientsWithRecipeId
       )
     }
-    res.json(createRecipe)
+    const currentRecipe = await Recipe.findAll({
+      where: {
+        userId: userId
+      }
+    })
+    res.json(currentRecipe)
   }
   catch (error) {
     console.log('error: ', error);
     if (error === 'DUPLICATED_NAME') {
       res.status(409).json({ statusMessage: "DUPLICATED_NAME" })
-    } else {
+    } else if (error === 'ALL_EMPTY') {
+      res.status(409).json({ statusMessage: "ALL_EMPTY" })
+    }
+    else {
       res.status(500).json({ statusMessage: "SERVER_ERROR" })
     }
   }

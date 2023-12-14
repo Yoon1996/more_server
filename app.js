@@ -1,5 +1,4 @@
 const AWS = require('aws-sdk');
-
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -44,6 +43,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+const bodyParser = require('body-parser');
+app.use(bodyParser.json({ limit: 5000000 }));
 
 sequelize.authenticate()
   .then((res) => {
@@ -64,12 +65,6 @@ sequelize.authenticate()
       foreignKey: 'recipeId',
       as: 'bookmarks'
     })
-
-    // Recipe.hasMany(Category, {
-    //   foreignKey: 'categoryId',
-    //   as: "Categorys"
-    // })
-
   })
   .catch(error => {
     console.log('connect fail !!!:', error);
@@ -77,25 +72,25 @@ sequelize.authenticate()
 
 
 // aws region 및 자격증명 설정
-AWS.config.update({
-  accessKeyId: process.env.S3_ACCESS_KEY_ID,
-  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-  region: 'ap-northeast-2',
-});
-// console.log('process.env.S3_ACCESS_KEY_ID: ', process.env.S3_ACCESS_KEY_ID);
-// console.log('process.env.S3_SECRET_ACCESS_KEY: ', process.env.S3_SECRET_ACCESS_KEY);
+// AWS.config.update({
+//   accessKeyId: process.env.S3_ACCESS_KEY_ID,
+//   secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+//   region: 'ap-northeast-2',
+// });
+// // console.log('process.env.S3_ACCESS_KEY_ID: ', process.env.S3_ACCESS_KEY_ID);
+// // console.log('process.env.S3_SECRET_ACCESS_KEY: ', process.env.S3_SECRET_ACCESS_KEY);
 
-// 자격증명 데이터를 따로 파일로 관리한다면 다음으로 호출할수 있다.
-// AWS.config.loadFromPath('./config.json');
+// // 자격증명 데이터를 따로 파일로 관리한다면 다음으로 호출할수 있다.
+// // AWS.config.loadFromPath('./config.json');
 
 
-/* S3에 있는 버킷 리스트 출력 */
-const s3 = new AWS.S3();
+// /* S3에 있는 버킷 리스트 출력 */
+// const s3 = new AWS.S3();
 
-// 프로미스 기반 aws sdk api
-s3.listBuckets().promise().then((data) => {
-  // console.log('S3 : ', JSON.stringify(data, null, 2));
-});
+// // 프로미스 기반 aws sdk api
+// s3.listBuckets().promise().then((data) => {
+//   // console.log('S3 : ', JSON.stringify(data, null, 2));
+// });
 
 app.use(authMiddleware)
 app.use('/', indexRouter);
