@@ -13,7 +13,8 @@ var router = express.Router();
 router.post("/create_recipe", async (req, res) => {
 
   const userId = req.userInfo.id
-  const { name, ingredientList, categoryName, view } = req.body;
+  const { name, ingredientList, categoryName, url, view } = req.body;
+
 
   try {
     if (!name && !categoryName && !ingredientList) throw "ALL_EMPTY"
@@ -35,7 +36,9 @@ router.post("/create_recipe", async (req, res) => {
       categoryId: makeCategoryId,
       userId: userId,
       view: 0,
+      url: url
     });
+    console.log('url: ', url);
 
     //재료 등록
     if (ingredientList?.length) {
@@ -195,6 +198,8 @@ router.put("/recipes/:recipeId", async (req, res) => {
   const newCategoryName = req.body.categoryName
   const newIngredientList = req.body.ingredientList
   const newCategoryId = req.body.categoryId
+  const newUrl = req.body.url
+  console.log('newUrl: ', newUrl);
 
   //들어온 재료 리스트가 현재 있는 재료 리스트의 개수랑 같으면 업데이트.
   //선택된 레시피의 현재 레시피 개수를 나타내는 로직
@@ -216,7 +221,7 @@ router.put("/recipes/:recipeId", async (req, res) => {
   })
 
   try {
-    await Recipe.update({ name: newTitle, categoryName: newCategoryName, categoryId: newCategoryId }, {
+    await Recipe.update({ name: newTitle, categoryName: newCategoryName, categoryId: newCategoryId, url: newUrl }, {
       where: {
         userId: userId,
         id: recipeId,

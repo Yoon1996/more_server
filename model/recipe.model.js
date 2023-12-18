@@ -29,6 +29,9 @@ const Recipe = sequelize.define('recipe', {
     },
     view: {
         type: DataTypes.INTEGER
+    },
+    url: {
+        type: DataTypes.STRING
     }
 
 
