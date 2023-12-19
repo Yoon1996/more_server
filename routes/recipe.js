@@ -5,7 +5,7 @@ const User = require("../model/user.model");
 const Category = require("../model/category.model");
 const { resolveInclude } = require("ejs");
 const { sequelize } = require("../util/database.util");
-const { where } = require("sequelize");
+const { where, Sequelize } = require("sequelize");
 const Bookmark = require("../model/bookmark.model");
 var router = express.Router();
 
@@ -134,36 +134,34 @@ router.get("/recipes", async (req, res, next) => {
 
 })
 //레시피 검색 기능
-router.get("/recipes", async (req, res) => {
-
-  console.log(req)
+router.get("/searchRecipes", async (req, res) => {
+  const searchWord = req.query.search
   try {
-    res.json("dddd")
-  }
-  catch (err) {
-    console.log('err: ', err);
-  }
-})
-
-//레시피 필터링
-router.get("/recipes/:categoryId", async (req, res) => {
-
-
-  const categoryId = req.params.categoryId
-  const userId = req.userInfo.id
-
-  try {
-    const recipeFilter = await Recipe.findAll({
-      where: {
-        userId: userId,
-        categoryId: categoryId
-      }
-    })
-    res.json(recipeFilter)
+    if (searchWord.length === 1) throw "PLEASE ENTER AT LEAST TWO CHARACTERS"
+    if (searchWord.length >= 2) {
+      const results = await Recipe.findAll({
+        where: {
+          userId: req.userInfo.id,
+          name: {
+            [Sequelize.Op.like]: `%${searchWord}%`,
+          },
+        },
+      });
+      res.json(results)
+    } else if (searchWord === '') {
+      const results = await Recipe.findAll({
+        where: {
+          userId: req.userInfo.id
+        }
+      })
+      res.json(results)
+    }
   }
   catch (error) {
+    if (error === "PLEASE ENTER AT LEAST TWO CHARACTERS") {
+      res.status(400).json({ statusMessage: "PLEASE ENTER AT LEAST TWO CHARACTERS" })
+    }
     console.log('error: ', error);
-    res.status(400).json({ statusMessage: "failed" })
   }
 })
 
