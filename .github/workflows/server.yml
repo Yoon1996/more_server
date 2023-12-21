@@ -19,7 +19,7 @@ jobs:
           key: ${{secrets.REMOTE_PRIVATE_KEY}}
           port: ${{secrets.REMOTE_SSH_PORT}}
           script: |
-            cd /home/ubuntu/bakers_server
+            cd /home/ubuntu/more_server
             git pull origin main
             export NVM_DIR=~/.nvm
             source ~/.nvm/nvm.sh
