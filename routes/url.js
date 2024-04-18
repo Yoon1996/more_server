@@ -33,7 +33,7 @@ const s3 = new AWS.S3();
 
 router.post("/send-url", async (req, res) => {
 
-    // console.log(req.body.filename)
+    console.log(req.body.filename)
     const filename = req.body.filename
 
     const params = {

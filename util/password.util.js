@@ -13,7 +13,7 @@
 //     return crypto.check
 // }
 
-// 8/20 becrypt 사용 
+// 8/20 bcrypt 사용 
 const bcrypt = require('bcrypt');
 
 //hash password 생성
